@@ -1,0 +1,19 @@
+{
+    "name": "mixcom/php-geotools",
+    "type": "library",
+    "require": {
+        "gasparesganga/php-shapefile": "^2.2"
+    },
+    "license": "Proprietary",
+    "authors": [
+        {
+            "name": "Sebastiaan Besselsen",
+            "email": "sbesselsen@mixcom.nl"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "GeoTools\\": "src/"
+        }
+    }
+}
