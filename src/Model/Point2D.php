@@ -22,6 +22,22 @@ final class Point2D
         $this->x = $x;
         $this->y = $y;
     }
+    
+    /**
+     * @param Point2D $point
+     * @return double
+     */
+    public function distanceToPoint(Point2D $point) {
+        return sqrt($this->squareDistanceToPoint($point));
+    }
+    
+    /**
+     * @param Point2D $point
+     * @return double
+     */
+    public function squareDistanceToPoint(Point2D $point) {
+        return pow($point->x - $this->x, 2) + pow($point->y - $this->y, 2);
+    }
 
     /**
      * @param Point2D[] $points
