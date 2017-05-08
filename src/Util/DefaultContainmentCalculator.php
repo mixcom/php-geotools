@@ -118,8 +118,11 @@ final class DefaultContainmentCalculator implements ContainmentCalculatorInterfa
      */
     public function inRadiusAroundRing(Point2D $point, Ring2D $ring, $radius)
     {
+        if ($this->inRing($point, $ring)) {
+            return true;
+        }
         if ($radius === 0) {
-            return $this->inRing($point, $ring);
+            return false;
         }
 
         $ringBoundingBox = $ring->getBoundingBox();
@@ -225,6 +228,10 @@ final class DefaultContainmentCalculator implements ContainmentCalculatorInterfa
     private function vertexPointDistance(Vertex2D $v, Point2D $p)
     {
         if ($v->p1->x === $v->p2->x) {
+            if ($v->p1->y === $v->p2->y) {
+                return $v->p1->distanceToPoint($p);
+            }
+
             $flippedVertex = new Vertex2D(
               new Point2D($v->p1->y, $v->p1->x),
               new Point2D($v->p2->y, $v->p2->x)
@@ -233,18 +240,32 @@ final class DefaultContainmentCalculator implements ContainmentCalculatorInterfa
             return $this->vertexPointDistance($flippedVertex, $flippedPoint);
         }
 
-        $slope = ($v->p2->y - $v->p1->y) / ($v->p2->x - $v->p1->x);
-        $offset = $v->p1->y - ($slope * $v->p1->x);
-
-        $a = $slope;
+        $a = ($v->p2->y - $v->p1->y) / ($v->p2->x - $v->p1->x);
         $b = -1;
-        $c = $offset;
+        $c = $v->p1->y - ($a * $v->p1->x);
 
         $a2b2 = pow($a, 2) + pow($b, 2);
-        $x = ($b * ($b * $p->x - $a * $p->y) - $a * $offset) / $a2b2;
-        $y = (-1 * $a * ($b * $p->x - $a * $p->y) - $b * $offset) / $a2b2;
+        $x = ($b * ($b * $p->x - $a * $p->y) - $a * $c) / $a2b2;
+        $y = (-1 * $a * ($b * $p->x - $a * $p->y) - $b * $c) / $a2b2;
 
         $closestPoint = new Point2D($x, $y);
+
+        $minXPoint = $v->p1;
+        $maxXPoint = $v->p2;
+        if ($v->p1->x > $v->p2->x) {
+            $minXPoint = $v->p2;
+            $maxXPoint = $v->p1;
+        }
+
+        if ($closestPoint->x < $minXPoint->x) {
+            // Outside the vertex on the left.
+            return $minXPoint->distanceToPoint($p);
+        }
+        if ($closestPoint->x > $maxXPoint->x) {
+            // Outside the vertex on the right.
+            return $maxXPoint->distanceToPoint($p);
+        }
+
         return $closestPoint->distanceToPoint($p);
     }
 }
