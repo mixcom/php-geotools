@@ -2,6 +2,7 @@
 namespace GeoTools\Util;
 
 use GeoTools\Model\BoundingBox2D;
+use GeoTools\Model\Circle2D;
 use GeoTools\Model\Point2D;
 use GeoTools\Model\Ring2D;
 use GeoTools\Model\RingsBasedShape2D;
@@ -53,6 +54,35 @@ final class DefaultContainmentCalculator implements ContainmentCalculatorInterfa
     }
 
     /**
+     * @inheritDoc
+     */
+    public function inRadiusAroundRingsBasedShape(
+      Point2D $point,
+      RingsBasedShape2D $shape,
+      $radius
+    ) {
+        if ($radius === 0) {
+            return $this->inRingsBasedShape($point, $shape);
+        }
+
+        $boundingBoxWithMargin = $shape->getBoundingBox()
+          ->withMargin($radius, $radius);
+
+        if (!$this->inBoundingBox($point, $boundingBoxWithMargin)) {
+            return false;
+        }
+
+        foreach ($shape->rings as $ring) {
+            if ($this->inRadiusAroundRing($point, $ring, $radius)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
      * @param \GeoTools\Model\Point2D $point
      * @param \GeoTools\Model\Ring2D $ring
      * @return bool
@@ -80,6 +110,35 @@ final class DefaultContainmentCalculator implements ContainmentCalculatorInterfa
         }
 
         return $intersections % 2 === 1;
+    }
+
+
+    /**
+     * @inheritDoc
+     */
+    public function inRadiusAroundRing(Point2D $point, Ring2D $ring, $radius)
+    {
+        if ($radius === 0) {
+            return $this->inRing($point, $ring);
+        }
+
+        $ringBoundingBox = $ring->getBoundingBox();
+        $ringBoundingBoxWithMargin = $ringBoundingBox->withMargin($radius, $radius);
+        if (!$this->inBoundingBox($point, $ringBoundingBoxWithMargin)) {
+            return false;
+        }
+
+        $circle = new Circle2D($point, $radius);
+
+        $vertices = $ring->getVertices();
+        foreach ($vertices as $vertex) {
+            $dist = $this->vertexPointDistance($vertex, $circle->p);
+            if ($dist <= $radius) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -156,5 +215,36 @@ final class DefaultContainmentCalculator implements ContainmentCalculatorInterfa
             return false;
         }
         return true;
+    }
+
+    /**
+     * @param \GeoTools\Model\Vertex2D $v
+     * @param \GeoTools\Model\Point2D $p
+     * @return double
+     */
+    private function vertexPointDistance(Vertex2D $v, Point2D $p)
+    {
+        if ($v->p1->x === $v->p2->x) {
+            $flippedVertex = new Vertex2D(
+              new Point2D($v->p1->y, $v->p1->x),
+              new Point2D($v->p2->y, $v->p2->x)
+            );
+            $flippedPoint = new Point2D($p->y, $p->x);
+            return $this->vertexPointDistance($flippedVertex, $flippedPoint);
+        }
+
+        $slope = ($v->p2->y - $v->p1->y) / ($v->p2->x - $v->p1->x);
+        $offset = $v->p1->y - ($slope * $v->p1->x);
+
+        $a = $slope;
+        $b = -1;
+        $c = $offset;
+
+        $a2b2 = pow($a, 2) + pow($b, 2);
+        $x = ($b * ($b * $p->x - $a * $p->y) - $a * $offset) / $a2b2;
+        $y = (-1 * $a * ($b * $p->x - $a * $p->y) - $b * $offset) / $a2b2;
+
+        $closestPoint = new Point2D($x, $y);
+        return $closestPoint->distanceToPoint($p);
     }
 }

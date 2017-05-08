@@ -36,4 +36,15 @@ final class BoundingBox2D
         $this->ymin = $ymin;
         $this->ymax = $ymax;
     }
+
+    /**
+     * @param double $marginX
+     * @param double $marginY
+     * @return BoundingBox2D
+     */
+    public function withMargin($marginX, $marginY)
+    {
+        return new BoundingBox2D($this->xmin - $marginX, $this->xmax + $marginX,
+          $this->ymin - $marginY, $this->ymax + $marginY);
+    }
 }
