@@ -44,4 +44,18 @@ interface ContainmentCalculatorInterface
      * @return bool
      */
     public function inRadiusAroundRing(Point2D $point, Ring2D $ring, $radius);
+
+    /**
+     * @param \GeoTools\Model\Point2D $point
+     * @param \GeoTools\Model\Ring2D $ring
+     * @return double
+    */
+    public function distanceToRing(Point2D $point, Ring2D $ring);
+
+    /**
+     * @param \GeoTools\Model\Point2D $point
+     * @param \GeoTools\Model\RingsBasedShape2D $shape
+     * @return double
+    */
+    public function distanceToRingsBasedShape(Point2D $point, RingsBasedShape2D $shape);
 }

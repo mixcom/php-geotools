@@ -145,6 +145,47 @@ final class DefaultContainmentCalculator implements ContainmentCalculatorInterfa
     }
 
     /**
+     * @inheritDoc
+     */
+    public function distanceToRing(Point2D $point, Ring2D $ring) {
+        if ($this->inRing($point, $ring)) {
+          return 0;
+        }
+        $vertices = $ring->getVertices();
+        $distance = NULL;
+        foreach ($vertices as $vertex) {
+            $vertexDistance = $this->vertexPointDistance($vertex, $point);
+            if ($distance === NULL || $vertexDistance <= $distance) {
+                $distance = $vertexDistance;
+                if ($distance == 0) {
+                    return $distance;
+                }
+            }
+        }
+        return $distance;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function distanceToRingsBasedShape(
+      Point2D $point,
+      RingsBasedShape2D $shape
+    ) {
+        $distance = NULL;
+        foreach ($shape->rings as $ring) {
+            $ringDistance = $this->distanceToRing($point, $ring);
+            if ($ringDistance !== NULL && ($distance === NULL || $ringDistance <= $distance)) {
+                $distance = $ringDistance;
+                if ($distance == 0) {
+                    return $distance;
+                }
+            }
+        }
+        return $distance;
+    }
+
+    /**
      * @param \GeoTools\Model\Vertex2D $v1
      * @param \GeoTools\Model\Vertex2D $v2
      * @return bool
